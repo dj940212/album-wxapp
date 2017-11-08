@@ -22,7 +22,7 @@ const asyncWrap = fn => (options = {}) => new Promise((resolve, reject) => {
 
 wx.loginAsync = asyncWrap('login')
 wx.getUserInfoAsync = asyncWrap('getUserInfo')
-wx.reqAsync = asyncWrap('request')
+wx.requestAsync = asyncWrap('request')
 wx.getSystemInfoAsync = asyncWrap('getSystemInfo')
 wx.payAsync = asyncWrap('requestPayment')
 
