@@ -15,7 +15,5 @@ App({
     userInfo: null,
     qiniuCDN: 'http://osmai097y.bkt.clouddn.com',
     serverUrl: 'http://127.0.0.1:8087/api2',
-    appid: 'wx2e8f44a0207c43a9',
-    secret: '91f6fd7cad06726faaf5d3e0899f26bb'
   }
 })

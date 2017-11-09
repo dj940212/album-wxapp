@@ -1,12 +1,13 @@
 {
   "pages":[
+    "pages/init/init",
     "pages/index/index",
     "pages/logs/logs"
   ],
   "window":{
     "backgroundTextStyle":"light",
     "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "WeChat",
+    "navigationBarTitleText": "宝宝相册",
     "navigationBarTextStyle":"black"
   }
 }

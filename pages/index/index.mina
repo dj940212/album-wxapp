@@ -1,16 +1,9 @@
 <template>
-    <view class="container">
-      <view class="userinfo">
-        <button wx:if="{{!hasUserInfo && canIUse}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
-        <block wx:else>
-          <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" background-size="cover"></image>
-          <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-        </block>
-      </view>
-      <view class="usermotto">
-        <text class="user-motto">{{motto}}</text>
-      </view>
-    </view>
+<view class="main">
+    <button hidden="showInitPage" bindtap="createBaby"> 创建相册 </button>
+    <button>添加照片</button>
+    <textbutton inner-text="sonme text"></textbutton>
+</view>
 </template>
 <script>
 //index.js
@@ -19,10 +12,7 @@ const app = getApp()
 
 Page({
     data: {
-        motto: 'Hello World',
-        userInfo: {},
-        hasUserInfo: false,
-        canIUse: wx.canIUse('button.open-type.getUserInfo')
+        showInitPage: true,
     },
     //事件处理函数
     bindViewTap: function() {
@@ -31,7 +21,8 @@ Page({
         })
     },
     async onLoad() {
-        await this.init()
+        const localOpenid = wx.getStorageSync("openid")
+        if (localOpenid) return this.setData({showInitPage: false})
     },
     getUserInfo: function(e) {
         console.log(e)
@@ -41,17 +32,13 @@ Page({
             hasUserInfo: true
         })
     },
+    // 出事化
     async init() {
-        const localOpenid = wx.getStorageSync("openid")
-        if (localOpenid) {
-            // todo
-            return
-        }
-        
         // 获取用户信息&jscode
         const user = await app.getUserInfo()
         user.userInfo.js_code = user.code
         
+
         console.log(user.userInfo)
 
         // 获取openid
@@ -67,6 +54,20 @@ Page({
         console.log("openid:", res.data.openid)
         // 本地存储openid
         wx.setStorageSync("openid", res.data.openid)
+    },
+    // 创建宝宝
+    async createBaby() {
+        await this.init()
+        let localOpenid = wx.getStorageSync("openid")
+
+        const res = await wx.requestAsync({
+            method: 'POST',
+            url: app.globalData.serverUrl + '/baby/create',
+            data: {openid: localOpenid, birthday: new Date(), name: 'ding'}
+        })
+
+        console.log(res.data)
     }
+
 })
 </script>
