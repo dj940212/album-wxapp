@@ -14,10 +14,11 @@ rm('-rf', assetsPath)
 mkdir(assetsPath)
 
 const renderConf = webpackConf
-const entry = () => _.reduce(config.json.pages, (en, i) => {
-  en[i] = resolve(__dirname, '../', `${i}.mina`)
+const entry = () => _.reduce(config.json.entry, (en, i) => {
+	console.log("===>",i)
+  	en[i] = resolve(__dirname, '../', `${i}.mina`)
 
-  return en
+  	return en
 }, {})
 
 renderConf.output = {
@@ -30,7 +31,7 @@ renderConf.entry.app = config.app
 
 const compiler = webpack(renderConf)
 
-fs.writeFileSync(resolve(config.assetsPath, './app.json'), JSON.stringify(config.json), 'utf8')
+fs.writeFileSync(resolve(config.assetsPath, './app.json'), JSON.stringify(config.json.page), 'utf8')
 
 compiler.watch({}, (err, stats) => {
   if (err) process.stdout.write(err)

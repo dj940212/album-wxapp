@@ -1,73 +1,282 @@
 <template>
 <view class="main">
-    <button hidden="showInitPage" bindtap="createBaby"> 创建相册 </button>
-    <button>添加照片</button>
-    <textbutton inner-text="sonme text"></textbutton>
+  <view class="container">
+    <view class="photoVideoBox">
+      <view wx:for="{{photoVideoList}}" wx:for-item="item" class="item-box">
+        <view class="date-box" wx:if="{{item.age || index===0}}">
+          <view class="date">
+          </view>
+          <view class="age" wx:if="{{true}}">
+            <view class="age-text">{{item.age ? item.age : nowAge}}</view>
+          </view>
+        </view> 
+        <view wx:if="{{item.type === 'photo'}}" class="photo-item" >
+          <view class="photo-wrapper" >
+            <image 
+              id="myimage" 
+              data-id="{{item.id}}"
+              data-index="{{index}}" 
+              mode="aspectFill"  
+              src="{{item.photoVideoUrl[0]}}" 
+              bindlongtap="selectBox"
+              bindtap="toPhotoDetail"
+              style="width: 580rpx;height: 360rpx">
+            </image>
+            <view class="photo-num" wx:if="{{item.photoVideoUrl.length!==1}}">
+              <view class="img-icon">{{item.photoVideoUrl.length}}</view>
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{item.type === 'video'}}"  class="video-item">
+          <video  
+            id="myVideo" 
+            src="{{item.photoVideoUrl}}" 
+            data-id="{{item.id}}"
+            data-index="{{index}}" 
+            bindlongtap="selectBox"
+            style="width: 580rpx;height: 360rpx" 
+            objectFit="cover" 
+            poster="{{item.thumbnailUrl}}">
+          </video>
+        </view>
+        <view class="content" wx:if="{{contentValue}}">
+          <view class="text-icon" wx:if="{{false}}"></view>
+          <view class="content-text" >{{item.content}}</view>
+        </view>
+        <view class="pubtime">{{item.meta.createAt}}</view>
+      </view>
+      <view class="bottom-loading" wx:if="{{boLoadingValue}}">
+        加载中...
+      </view>  
+    </view>
+  </view>
+  <view class="add" >
+    <view class="addItem addIcon" bindtap="showAddItem">+</view>
+    <view class="addItem addPhoto" bindtap='didPressChooesImage' wx:if="{{addVlue}}"></view>
+    <view class="addItem addVideo" bindtap='didPressChooesVideo' wx:if="{{addVlue}}"></view>
+    <view class="addItem addMessage" bindlongtap='clearStorage' wx:if="{{addVlue}}"></view>  
+  </view>
+  <view>
+    <loading hidden="{{loadingValue}}" bindchange="loadingChange">上传中...</loading>
+    <toast hidden="{{toastValue}}" duration="1" bindchange="toastChange">上传失败</toast>
+    <modal hidden="{{modalValue}}" no-cancel bindconfirm="modalChange">
+      你没有操作权限,如有需要，请联系开发者
+    </modal>
+    <modal confirm-text="确定" cancel-text="取消" hidden="{{modalValue2}}" mask bindconfirm="modalConfirm2" bindcancel="modalCancel">
+      此操作需登录，是否登录？
+    </modal>
+  </view>
 </view>
 </template>
 <script>
-//index.js
+var upload = require("../../static/js/uploader")
+var util = require("../../static/js/util.js")
+var config = require("../../static/js/config.js")
 //获取应用实例
 const app = getApp()
 
 Page({
-    data: {
-        showInitPage: true,
-    },
-    //事件处理函数
-    bindViewTap: function() {
-        wx.navigateTo({
-            url: '../logs/logs'
-        })
-    },
-    async onLoad() {
-        const localOpenid = wx.getStorageSync("openid")
-        if (localOpenid) return this.setData({showInitPage: false})
-    },
-    getUserInfo: function(e) {
-        console.log(e)
-        app.globalData.userInfo = e.detail.userInfo
-        this.setData({
-            userInfo: e.detail.userInfo,
-            hasUserInfo: true
-        })
-    },
-    // 出事化
-    async init() {
-        // 获取用户信息&jscode
-        const user = await app.getUserInfo()
-        user.userInfo.js_code = user.code
-        
+  data: {
+    photoVideoList: [],
+    position:{},
+    addVlue: false,
+    nowAge: "",
+    contentValue: true,
+    loadingValue: true,
+    boLoadingValue: true,
+    pubtime: "",
+    modalValue: true,
+    modalValue2: true,
+    toastValue: false
+  },
+  //事件处理函数
+  onLoad: function () {
+    var _this = this
+    // 保存this
+    app.saveIndexThis(this)
+    this.setData({
+      nowAge: util.calAge(config.birthday),
+      contentValue: true,
+      loadingValue: true,
+      boLoadingValue: true,
+      addVlue: false,
+      modalValue: true,
+      modalValue2: true,
+      toastValue: true
+    })
 
-        console.log(user.userInfo)
-
-        // 获取openid
-        const res = await wx.requestAsync({
-            url: app.globalData.serverUrl + '/user/login',
-            method: 'POST',
-            data: user.userInfo
+    app.getPhotoVideo(6,0,function(){
+      _this.setData({
+        photoVideoList: app.photoVideoList
+      })
+      wx.stopPullDownRefresh()
+    }) 
+  },
+  onReady: function (res) {
+    this.videoContext = wx.createVideoContext('myVideo')
+  },
+  onPageScroll: function() {
+    this.setData({
+      addVlue : false
+    })
+  },
+  // 下拉刷新
+  onPullDownRefresh: function(){
+    this.onLoad()
+  },
+  // 上拉加载
+  onReachBottom: function() {
+    var _this = this
+    var list = this.data.photoVideoList
+    var skipNum = list.length
+    
+    
+    app.getPhotoVideo(4,skipNum,function(){
+      _this.setData({
+        photoVideoList: _this.data.photoVideoList.concat(app.photoVideoList)
+      })
+      if (!app.photoVideoList.length) {
+        _this.setData({
+          boLoadingValue: false
         })
-        
-        if (!res.data.openid) {
-            return console.log(res.data.message)
-        }
-        console.log("openid:", res.data.openid)
-        // 本地存储openid
-        wx.setStorageSync("openid", res.data.openid)
-    },
-    // 创建宝宝
-    async createBaby() {
-        await this.init()
-        let localOpenid = wx.getStorageSync("openid")
-
-        const res = await wx.requestAsync({
-            method: 'POST',
-            url: app.globalData.serverUrl + '/baby/create',
-            data: {openid: localOpenid, birthday: new Date(), name: 'ding'}
-        })
-
-        console.log(res.data)
+      }
+    })
+  },
+  // 分享
+  onShareAppMessage :function() {
+    return {
+      title: "田京墨的时光小屋",
+      success: function(res){
+        console.log("转发成功")
+      }
     }
+  },
+  // 选择照片
+  didPressChooesImage:function() {
+    var that = this
+    app.checkAuth(function(){
+      wx.chooseImage({
+        success: function (res) {
+          var filePath = res.tempFilePaths;
+          // 跳转到编辑页
+          app.addPhotoPage(filePath)
+        }
+      })
+    })
+    
+  },
+  // 选择视频
+  didPressChooesVideo:function() {
+    var that = this
+    app.checkAuth(function(){
+      wx.chooseVideo({
+        sourceType: ['album','camera'],
+        maxDuration: 20,
+        camera: 'back',
+        success: function(res) {
+          var filePath = res.tempFilePath;
+          console.log(filePath)
+          // 跳转到编辑页
+          app.addVideoPage(filePath)
+        }
+      })
+    })
+    
+  },
+  // 删除文件
+  deletePhotoOrVideo: function(e){
+    var _this = this
+    app.checkAuth(function(){
+      var id = e.currentTarget.dataset.id
+      var index = e.currentTarget.dataset.index
+      console.log("id",id)
+      console.log("index",index)
 
-})
+      wx.request({
+        url: config.deletePhotoOrVideoUrl,
+        method: 'POST',
+        data: {
+          accessToken: config.accessToken,
+          id:id
+        },
+        success: function(res) {
+          console.log("删除成功")
+        }
+      })
+      var arr = _this.data.photoVideoList
+      console.log("arr1",arr)
+      arr.splice(index,1)
+      console.log("arr2",arr)
+      _this.setData({
+        photoVideoList:arr
+      })
+    })
+    
+  },
+  // 跳转到photoDetail页
+  toPhotoDetail: function(e){
+    getApp().doToPhotoDetail(e)
+  },
+  // 选项弹窗
+  selectBox: function(e) {
+    var that = this
+    console.log(e.currentTarget)
+    console.log(e.currentTarget.offsetLeft,e.currentTarget.offsetTop)
+    
+    wx.showActionSheet({
+      itemList: ['删除', '保存'],
+      success: function(res) {
+        console.log(res.tapIndex)
+        if (res.tapIndex===0) {
+          that.deletePhotoOrVideo(e)
+        }
+      },
+      fail: function(res) {
+        console.log(res.errMsg)
+      }
+    })
+  },
+  toastChange: function() {
+    wx.showToast({})
+  },
+  
+  showAddItem:function() {
+    this.setData({
+      addVlue : !this.data.addVlue
+    })
+    
+  },
+  hideContent: function(e){
+    this.setData({
+      contentValue: false
+    })
+    console.log("play",e)
+  },
+  showContent: function(){
+    this.setData({
+      contentValue: true
+    })
+  },
+  modalChange: function(e){
+    console.log(e)
+    this.setData({
+      modalValue: true
+    })
+  },
+  clearStorage:function(){
+    wx.clearStorageSync()
+    console.log("清楚本地数据")
+  },
+  modalConfirm2: function() {
+    app.getLogin()
+    this.setData({
+      modalValue2: true
+    })
+  },
+  modalCancel: function() {
+    this.setData({
+      modalValue2: true
+    })
+  }
+});
 </script>

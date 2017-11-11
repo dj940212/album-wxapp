@@ -4,6 +4,7 @@
     {{innerText}}
   </view>
   <slot></slot>
+  
 </template>
 
 <script>
@@ -25,4 +26,3 @@ Component({
   }
 })
 </script>
-

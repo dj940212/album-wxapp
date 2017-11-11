@@ -1,5 +1,6 @@
 {
-  "usingComponents": {
-    	"textbutton": "../textbutton/textbutton"
-  }
+  	"usingComponents": {
+    	"textbutton": "../textbutton/textbutton",
+    	"obutton": "../obutton/obutton"
+  	}
 }

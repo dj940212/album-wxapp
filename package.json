@@ -13,6 +13,7 @@
   "author": "Scott",
   "license": "MIT",
   "dependencies": {
+    "glob": "^7.1.2",
     "lodash": "^4.17.4",
     "pug": "^2.0.0-rc.3",
     "ramda": "^0.24.1",
